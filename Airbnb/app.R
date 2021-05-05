@@ -21,7 +21,7 @@ ui <- fluidPage(
         
         titlePanel("Airbnb Filters"),
         radioButtons(inputId = "city",
-                            label = "Select City:",
+                            label = "Select City",
                             choices = c("Los Angeles", "New York City"),
                             selected = "Los Angeles"
                      )
