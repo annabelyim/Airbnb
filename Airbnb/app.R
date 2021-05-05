@@ -18,9 +18,12 @@ ui <- fluidPage(
    # Sidebar with a slider input for number of bins 
    sidebarLayout(
       sidebarPanel(
-         selectInput("city", 
-                      label = "Select City",
-                      choices = c("Los Angeles", "New York City")
+        
+        titlePanel("Airbnb Filters"),
+        radioButtons(inputId = "city",
+                            label = "Select City:",
+                            choices = c("Los Angeles", "New York City"),
+                            selected = "Los Angeles"
                      )
       ),
       
