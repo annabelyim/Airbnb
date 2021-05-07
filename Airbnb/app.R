@@ -5,9 +5,12 @@ library(tidyverse)
 listings_la <- read_csv("~/Airbnb/listings-la.csv")
 listings_nyc <- read_csv("~/Airbnb/listings-nyc.csv")
 
-# neighbourhoods
-neighbourhoods_la <- listings_la %>% distinct(neighbourhood) %>% arrange(neighbourhood)
-neighbourhoods_nyc <- listings_nyc %>% distinct(neighbourhood) %>% arrange(neighbourhood)
+# neighborhoods
+neighborhoods_la <- listings_la %>% distinct(neighborhood) %>% arrange(neighborhood)
+neighborhoods_nyc <- listings_nyc %>% distinct(neighborhood) %>% arrange(neighborhood)
+neighborhoods_all <- neighborhoods_la %>% 
+  rbind(neighborhoods_nyc)
+
 
 # Define UI for application 
 ui <- fluidPage(
@@ -25,12 +28,15 @@ ui <- fluidPage(
                             selected = "Los Angeles"
                      ),
         
-        selectInput(inputId = "neighbourhood",
-                    label = "Select Neighbourhood",
-                    choices = neighbourhoods_la,
+        selectInput(inputId = "neighborhood",
+                    label = "Select Neighborhood",
+                    choices = neighborhoods_la,
                     selected = "", 
                     multiple = TRUE
-        )
+        ),
+        uiOutput("slider_price"),
+        uiOutput("slider_rating"),
+        uiOutput("slider_reviews")
       
       ),
       
@@ -47,20 +53,38 @@ server <- function(input, output, session) {
   # neighborhoods to dynamically changed based on city selected
   selected_neighborhood <- reactive({
     if (input$city == "New York City") {
-      neighbourhoods_nyc
+      neighborhoods_nyc
     } else {
-      neighbourhoods_la
+      neighborhoods_la
     }
   })
   
   observeEvent(input$city, {
     updateSelectInput(session, 
-                      inputId = "neighbourhood",
-                      label = "Select Neighbourhood",
+                      inputId = "neighborhood",
+                      label = "Select Neighborhood",
                       choices = selected_neighborhood())
   })
+  
+  output$slider_price <- renderUI({
+    sliderInput("avgprice", "Average Price",
+                min = 0, max = 500,
+                value = c(50,150))
+  })
+  
+  output$slider_rating <- renderUI({
+    sliderInput("rating", "Average Rating",
+                min = 0, max = 10,
+                value = 8)
+  })
+  
+  output$slider_reviews <- renderUI({
+    sliderInput("reviews", "Number of Reviews",
+                min = 0, max = 200,
+                value = 10)
+  })
 
-  }
+}
 
 
 # Run the application 
