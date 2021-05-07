@@ -6,8 +6,8 @@ listings_la <- read_csv("~/Airbnb/listings-la.csv")
 listings_nyc <- read_csv("~/Airbnb/listings-nyc.csv")
 
 # neighborhoods
-neighborhoods_la <- listings_la %>% distinct(neighborhood) %>% arrange(neighborhood)
-neighborhoods_nyc <- listings_nyc %>% distinct(neighborhood) %>% arrange(neighborhood)
+neighborhoods_la <- listings_la %>% distinct(neighbourhood) %>% arrange(neighbourhood)
+neighborhoods_nyc <- listings_nyc %>% distinct(neighbourhood) %>% arrange(neighbourhood)
 neighborhoods_all <- neighborhoods_la %>% 
   rbind(neighborhoods_nyc)
 
