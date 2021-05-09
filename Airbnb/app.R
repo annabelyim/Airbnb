@@ -8,11 +8,8 @@ listings_la <- read_csv("~/Airbnb/UpdatedLAlistings.csv")
 listings_nyc <- read_csv("~/Airbnb/UpdatedNYClistings.csv")
 
 # map variables
-states <- map_data("state")
 counties <- map_data("county")
-ca <- subset(states, region == "california")
 ca_county <- subset(counties, region == "california")
-nyc <- subset(states, region == "new york")
 nyc_county <- subset(counties, region == "new york")
 
 # neighborhood variables 
@@ -62,7 +59,7 @@ ui <- fluidPage(
 server <- function(input, output, session) {
   
   # neighborhoods to dynamically changed based on city selected
-  selected_neighborhood <- reactive({
+  selected_city <- reactive({
     req(input$city)
     if (input$city == "New York City") {
       neighborhoods_nyc
@@ -75,7 +72,7 @@ server <- function(input, output, session) {
     updateSelectInput(session, 
                       inputId = "neighborhood",
                       label = "Select Neighborhood",
-                      choices = selected_neighborhood())
+                      choices = selected_city())
   })
   
   output$slider_price <- renderUI({
@@ -96,23 +93,35 @@ server <- function(input, output, session) {
                 value = 10)
   })
   
+  selected_neighborhoods <- reactive({
+    req(input$city)
+    req(input$neighborhood)
+    if (input$city == "New York City") {
+      filter(listings_nyc, neighborhood %in% input$neighborhood) 
+    } else {
+      filter(listings_la, neighborhood %in% input$neighborhood) 
+    }
+    
+  })
   # map 
   output$map <- renderPlot ({
     if (input$city == "New York City") {
-    ggplot(data = nyc, aes(x = long, y = lat, group = group)) +
-      geom_polygon(color = "white", fill = "gray") +
-      coord_quickmap() +
+    ggplot() +
+      geom_polygon(data = nyc_county, aes(x = long, y = lat, group = group), color = "white", fill = "gray") +
+      geom_point(data = selected_neighborhoods(), aes(x = longitude, y = latitude, alpha = 0.05)) +
+      coord_quickmap(xlim = c(-75, -73), ylim = c(40, 41)) +
       theme_void() +
-      geom_polygon(data = nyc_county, fill = NA, color = "white") +
-      geom_polygon(color = "white", fill = NA)
+      guides(alpha = FALSE) 
+      
+      
       
     } else {
-      ggplot(data = ca, aes(x = long, y = lat, group = group)) +
-        geom_polygon(color = "white", fill = "gray") +
-        coord_quickmap() +
+      ggplot() +
+        geom_polygon(data = ca_county, aes(x = long, y = lat, group = group), color = "white", fill = "gray") +
+        geom_point(data = selected_neighborhoods(), aes(x = longitude, y = latitude, alpha = 0.5)) +
+        coord_quickmap(xlim = c(-119, -117), ylim = c(33, 35)) +
         theme_void() +
-        geom_polygon(data = ca_county, fill = NA, color = "white") +
-        geom_polygon(color = "white", fill = NA)
+        guides(alpha = FALSE) 
     }
     
   })
