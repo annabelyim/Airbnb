@@ -43,7 +43,7 @@ ui <- fluidPage(
         ),
         uiOutput("slider_price"),
         uiOutput("slider_rating"),
-        uiOutput("slider_reviews")
+        uiOutput("slider_reviews"),
       
         # check boxes
       	checkboxInput(inputId = "entire house",
