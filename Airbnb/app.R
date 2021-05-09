@@ -1,13 +1,23 @@
 library(shiny)
 library(tidyverse)
+library(maps)
+library(shinycssloaders)
 
 # import data
-listings_la <- read_csv("~/Airbnb/listings-la.csv")
-listings_nyc <- read_csv("~/Airbnb/listings-nyc.csv")
+listings_la <- read_csv("~/Airbnb/UpdatedLAlistings.csv")
+listings_nyc <- read_csv("~/Airbnb/UpdatedNYClistings.csv")
 
-# neighborhoods
-neighborhoods_la <- listings_la %>% distinct(neighbourhood) %>% arrange(neighbourhood)
-neighborhoods_nyc <- listings_nyc %>% distinct(neighbourhood) %>% arrange(neighbourhood)
+# map variables
+states <- map_data("state")
+counties <- map_data("county")
+ca <- subset(states, region == "california")
+ca_county <- subset(counties, region == "california")
+nyc <- subset(states, region == "new york")
+nyc_county <- subset(counties, region == "new york")
+
+# neighborhood variables 
+neighborhoods_la <- listings_la %>% distinct(neighborhood) %>% arrange(neighborhood)
+neighborhoods_nyc <- listings_nyc %>% distinct(neighborhood) %>% arrange(neighborhood)
 neighborhoods_all <- neighborhoods_la %>% 
   rbind(neighborhoods_nyc)
 
@@ -42,6 +52,7 @@ ui <- fluidPage(
       
 
       mainPanel(
+        withSpinner(plotOutput(outputId = "map"))
         
       )
    )
@@ -52,6 +63,7 @@ server <- function(input, output, session) {
   
   # neighborhoods to dynamically changed based on city selected
   selected_neighborhood <- reactive({
+    req(input$city)
     if (input$city == "New York City") {
       neighborhoods_nyc
     } else {
@@ -82,6 +94,27 @@ server <- function(input, output, session) {
     sliderInput("reviews", "Number of Reviews",
                 min = 0, max = 200,
                 value = 10)
+  })
+  
+  # map 
+  output$map <- renderPlot ({
+    if (input$city == "New York City") {
+    ggplot(data = nyc, aes(x = long, y = lat, group = group)) +
+      geom_polygon(color = "white", fill = "gray") +
+      coord_quickmap() +
+      theme_void() +
+      geom_polygon(data = nyc_county, fill = NA, color = "white") +
+      geom_polygon(color = "white", fill = NA)
+      
+    } else {
+      ggplot(data = ca, aes(x = long, y = lat, group = group)) +
+        geom_polygon(color = "white", fill = "gray") +
+        coord_quickmap() +
+        theme_void() +
+        geom_polygon(data = ca_county, fill = NA, color = "white") +
+        geom_polygon(color = "white", fill = NA)
+    }
+    
   })
 
 }
