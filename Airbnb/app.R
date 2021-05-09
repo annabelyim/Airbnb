@@ -46,8 +46,32 @@ ui <- fluidPage(
         ),
         uiOutput("slider_price"),
         uiOutput("slider_rating"),
-        uiOutput("slider_reviews")
+        uiOutput("slider_reviews"),
       
+        # check boxes
+      	checkboxInput(inputId = "entire house",
+                    label = "Entire house",
+                    value = FALSE, 
+                    width = '100%'
+        ),
+        
+        checkboxInput(inputId = "washing machine",
+                    label = "Has a washer & dryer",
+                    value = FALSE, 
+                    width = '100%'
+        ),
+        
+        checkboxInput(inputId = "cooking utilities",
+                    label = "Home cooking utilities",
+                    value = FALSE, 
+                    width = '100%'
+        ),
+        
+        checkboxInput(inputId = "parking",
+                    label = "Free parking",
+                    value = FALSE, 
+                    width = '100%'
+        )
       ),
       
 
