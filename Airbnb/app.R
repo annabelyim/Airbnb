@@ -5,7 +5,9 @@ library(shinycssloaders)
 
 # import data
 listings_la <- read_csv("~/Airbnb/UpdatedLAlistings.csv")
-listings_nyc <- read_csv("~/Airbnb/UpdatedNYClistings.csv")
+listings_nyc <- read_csv("~/Airbnb/UpdatedNYClistings.csv") 
+listings_la$price <- as.numeric(gsub("[$,]", "", listings_la$price))
+listings_nyc$price <- as.numeric(gsub("[$,]", "", listings_nyc$price))
 
 # map variables
 counties <- map_data("county")
@@ -42,7 +44,6 @@ ui <- fluidPage(
                     multiple = TRUE
         ),
         uiOutput("slider_price"),
-        uiOutput("slider_rating"),
         uiOutput("slider_reviews"),
       
         # check boxes
@@ -73,8 +74,8 @@ ui <- fluidPage(
       
 
       mainPanel(
-        withSpinner(plotOutput(outputId = "map"))
-        
+        withSpinner(plotOutput(outputId = "map")),
+        plotOutput(outputId = "avgprice_graph")
       )
    )
 )
@@ -82,8 +83,18 @@ ui <- fluidPage(
 # Define server 
 server <- function(input, output, session) {
   
-  # neighborhoods to dynamically changed based on city selected
+  # city selected
   selected_city <- reactive({
+    req(input$city)
+    if (input$city == "New York City") {
+      listings_nyc
+    } else {
+      listings_la
+    }
+  })
+  
+  # neighborhoods to dynamically changed based on city selected
+  selected_city_neighborhoods <- reactive({
     req(input$city)
     if (input$city == "New York City") {
       neighborhoods_nyc
@@ -96,19 +107,13 @@ server <- function(input, output, session) {
     updateSelectInput(session, 
                       inputId = "neighborhood",
                       label = "Select Neighborhood",
-                      choices = selected_city())
+                      choices = selected_city_neighborhoods())
   })
   
   output$slider_price <- renderUI({
     sliderInput("avgprice", "Average Price",
                 min = 0, max = 500,
                 value = c(50,150))
-  })
-  
-  output$slider_rating <- renderUI({
-    sliderInput("rating", "Average Rating",
-                min = 0, max = 10,
-                value = 8)
   })
   
   output$slider_reviews <- renderUI({
@@ -125,8 +130,15 @@ server <- function(input, output, session) {
     } else {
       filter(listings_la, neighborhood %in% input$neighborhood) 
     }
-    
   })
+    
+  selected_city_prices <- reactive({
+    prices <- 2 * sd(selected_city()$price)
+    listings_prices <- selected_city() %>% 
+      filter(price <= prices)
+    listings_prices
+  })
+    
   # map 
   output$map <- renderPlot ({
     if (input$city == "New York City") {
@@ -148,6 +160,13 @@ server <- function(input, output, session) {
         guides(alpha = FALSE) 
     }
     
+  })
+  
+  output$avgprice_graph <- renderPlot ({
+    ggplot(selected_city_prices(), aes(x = price, fill = room_type)) +
+      geom_histogram(binwidth = 50) +
+      labs(x = "average price", y = "count", title = "Airbnb Average Prices") +
+      theme(legend.title = element_blank())
   })
 
 }
