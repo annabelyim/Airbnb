@@ -1,20 +1,12 @@
-<<<<<<< HEAD
-library(shinycssloaders)
-library(leaflet)
-
-# import data
-listings_la <- read_csv("/Users/vibhagogu/Airbnb/Airbnb/UpdatedLAlistings.csv")
-listings_nyc <- read_csv("/Users/vibhagogu/Airbnb/Airbnb/UpdatedNYClistings.csv") 
-=======
 library(shiny)
 library(tidyverse)
 library(maps)
 library(shinycssloaders)
+library(leaflet)
 
 # import data
 listings_la <- read_csv("~/Airbnb/UpdatedLAlistings.csv")
 listings_nyc <- read_csv("~/Airbnb/UpdatedNYClistings.csv") 
->>>>>>> 5f2eee3421cdefda5b57d2407bb95a4dda4f78e9
 listings_la$price <- as.numeric(gsub("[$,]", "", listings_la$price))
 listings_nyc$price <- as.numeric(gsub("[$,]", "", listings_nyc$price))
 
@@ -32,7 +24,6 @@ neighborhoods_all <- neighborhoods_la %>%
 
 # Define UI for application 
 ui <- fluidPage(
-<<<<<<< HEAD
   
   # Application title
   titlePanel("Airbnb"),
@@ -86,67 +77,11 @@ ui <- fluidPage(
     mainPanel(
       withSpinner(plotOutput(outputId = "map")),
       plotOutput(outputId = "avgprice_graph"), 
-      plotOutput(outputId = "map2"),
+      plotOutput(outputId = "map2")
     )
   )
-=======
-   
-   # Application title
-   titlePanel("Airbnb"),
-   
-   sidebarLayout(
-      sidebarPanel(
-        
-        titlePanel("Airbnb Filters"),
-        radioButtons(inputId = "city",
-                            label = "Select City",
-                            choices = c("Los Angeles", "New York City"),
-                            selected = "Los Angeles"
-                     ),
-        
-        selectInput(inputId = "neighborhood",
-                    label = "Select Neighborhood",
-                    choices = neighborhoods_la,
-                    selected = "", 
-                    multiple = TRUE
-        ),
-        uiOutput("slider_price"),
-        uiOutput("slider_reviews"),
-      
-        # check boxes
-      	checkboxInput(inputId = "entire house",
-                    label = "Entire house",
-                    value = FALSE, 
-                    width = '100%'
-        ),
-        
-        checkboxInput(inputId = "washing machine",
-                    label = "Has a washer & dryer",
-                    value = FALSE, 
-                    width = '100%'
-        ),
-        
-        checkboxInput(inputId = "cooking utilities",
-                    label = "Home cooking utilities",
-                    value = FALSE, 
-                    width = '100%'
-        ),
-        
-        checkboxInput(inputId = "parking",
-                    label = "Free parking",
-                    value = FALSE, 
-                    width = '100%'
-        ),
-      ),
-      
-
-      mainPanel(
-        withSpinner(plotOutput(outputId = "map")),
-        plotOutput(outputId = "avgprice_graph")
-      )
-   )
->>>>>>> 5f2eee3421cdefda5b57d2407bb95a4dda4f78e9
 )
+
 
 # Define server 
 server <- function(input, output, session) {
@@ -182,8 +117,6 @@ server <- function(input, output, session) {
     sliderInput("avgprice", "Average Price",
                 min = 0, max = 500,
                 value = c(50,150))
-<<<<<<< HEAD
-=======
   })
   
   output$slider_reviews <- renderUI({
@@ -237,7 +170,6 @@ server <- function(input, output, session) {
       geom_histogram(binwidth = 50) +
       labs(x = "average price", y = "count", title = "Airbnb Average Prices") +
       theme(legend.title = element_blank())
->>>>>>> 5f2eee3421cdefda5b57d2407bb95a4dda4f78e9
   })
   
   output$slider_reviews <- renderUI({
@@ -320,12 +252,6 @@ server <- function(input, output, session) {
           ) }
       })
 
-<<<<<<< HEAD
-  
-  
-  
-  
-  
   output$map <- renderPlot ({
     if (input$city == "New York City") {
       ggplot() +
@@ -355,8 +281,6 @@ server <- function(input, output, session) {
       theme(legend.title = element_blank())
   })
   
-=======
->>>>>>> 5f2eee3421cdefda5b57d2407bb95a4dda4f78e9
 }
 
 
