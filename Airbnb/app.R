@@ -70,14 +70,14 @@ ui <- fluidPage(
                     label = "Free parking",
                     value = FALSE, 
                     width = '100%'
-      ),
+      )
     ),
     
     
     mainPanel(
       withSpinner(plotOutput(outputId = "map")),
       plotOutput(outputId = "avgprice_graph"), 
-      plotOutput(outputId = "map2")
+      leafletOutput(("map2"))
     )
   )
 )
@@ -165,6 +165,7 @@ server <- function(input, output, session) {
     
   })
   
+  # histogram of avg price graph 
   output$avgprice_graph <- renderPlot ({
     ggplot(selected_city_prices(), aes(x = price, fill = room_type)) +
       geom_histogram(binwidth = 50) +
@@ -172,32 +173,9 @@ server <- function(input, output, session) {
       theme(legend.title = element_blank())
   })
   
-  output$slider_reviews <- renderUI({
-    sliderInput("reviews", "Number of Reviews",
-                min = 0, max = 200,
-                value = 10)
-  })
-  
-  selected_neighborhoods <- reactive({
-    req(input$city)
-    req(input$neighborhood)
-    if (input$city == "New York City") {
-      filter(listings_nyc, neighborhood %in% input$neighborhood) 
-    } else {
-      filter(listings_la, neighborhood %in% input$neighborhood) 
-    }
-  })
-  
-  selected_city_prices <- reactive({
-    prices <- 2 * sd(selected_city()$price)
-    listings_prices <- selected_city() %>% 
-      filter(price <= prices)
-    listings_prices
-  })
-  
   # map 
   #Other type of map
-    # Create our colors with a categorical color function
+  # Create our colors with a categorical color function
   bins <- c(0,20,40,60, 80, 100)
     
     output$map2 <- renderLeaflet({
@@ -225,8 +203,9 @@ server <- function(input, output, session) {
           title = "Listings",
           opacity = 0.7,
           labels = labels
-        ) }
-      if (input$city == "Los Angeles") {
+        ) 
+        
+        } else {
         pal <- colorBin(c("#d7191c", "#fdae61", "#ffffbf", "#a6d96a", "#1a9641"), domain = listings_la$review_scores_rating, bins = bins)
         map2 <- leaflet(listings_la) %>%
           addProviderTiles("CartoDB.Positron", options = providerTileOptions(noWrap = TRUE)) %>%
@@ -251,36 +230,7 @@ server <- function(input, output, session) {
             labels = labels
           ) }
       })
-
-  output$map <- renderPlot ({
-    if (input$city == "New York City") {
-      ggplot() +
-        geom_polygon(data = nyc_county, aes(x = long, y = lat, group = group), color = "white", fill = "gray") +
-        geom_point(data = selected_neighborhoods(), aes(x = longitude, y = latitude, alpha = 0.05)) +
-        coord_quickmap(xlim = c(-75, -73), ylim = c(40, 41)) +
-        theme_void() +
-        guides(alpha = FALSE) 
-      
-      
-      
-    } else {
-      ggplot() +
-        geom_polygon(data = ca_county, aes(x = long, y = lat, group = group), color = "white", fill = "gray") +
-        geom_point(data = selected_neighborhoods(), aes(x = longitude, y = latitude, alpha = 0.5)) +
-        coord_quickmap(xlim = c(-119, -117), ylim = c(33, 35)) +
-        theme_void() +
-        guides(alpha = FALSE) 
-    }
     
-  })
-  
-  output$avgprice_graph <- renderPlot ({
-    ggplot(selected_city_prices(), aes(x = price, fill = room_type)) +
-      geom_histogram(binwidth = 50) +
-      labs(x = "average price", y = "count", title = "Airbnb Average Prices") +
-      theme(legend.title = element_blank())
-  })
-  
 }
 
 
