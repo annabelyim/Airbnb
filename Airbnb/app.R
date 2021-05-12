@@ -3,6 +3,7 @@ library(tidyverse)
 library(maps)
 library(shinycssloaders)
 library(leaflet)
+library(GGally)
 
 # import data
 listings_la <- read_csv("~/Airbnb/UpdatedLAlistings.csv")
@@ -18,9 +19,6 @@ nyc_county <- subset(counties, region == "new york")
 # neighborhood variables 
 neighborhoods_la <- listings_la %>% distinct(neighborhood) %>% arrange(neighborhood)
 neighborhoods_nyc <- listings_nyc %>% distinct(neighborhood) %>% arrange(neighborhood)
-neighborhoods_all <- neighborhoods_la %>% 
-  rbind(neighborhoods_nyc)
-
 
 # Define UI for application 
 ui <- fluidPage(
@@ -28,9 +26,11 @@ ui <- fluidPage(
   # Application title
   titlePanel("Airbnb"),
   
+  # Filtering Panel 
   sidebarLayout(
     sidebarPanel(
       
+      # selecting city and neighborhoods 
       titlePanel("Airbnb Filters"),
       radioButtons(inputId = "city",
                    label = "Select City",
@@ -44,6 +44,8 @@ ui <- fluidPage(
                   selected = "", 
                   multiple = TRUE
       ),
+      
+      # sliders
       uiOutput("slider_price"),
       uiOutput("slider_reviews"),
       
@@ -76,8 +78,9 @@ ui <- fluidPage(
     
     mainPanel(
       withSpinner(plotOutput(outputId = "map")),
-      plotOutput(outputId = "avgprice_graph"), 
-      leafletOutput(("map2"))
+      plotOutput(outputId = "avgprice_graph"),
+      plotOutput(outputId= "avgratings_graph")
+      # leafletOutput(("map2"))
     )
   )
 )
@@ -96,7 +99,7 @@ server <- function(input, output, session) {
     }
   })
   
-  # neighborhoods to dynamically changed based on city selected
+  # neighborhoods to dynamically changed based on city selected for map 
   selected_city_neighborhoods <- reactive({
     req(input$city)
     if (input$city == "New York City") {
@@ -134,25 +137,34 @@ server <- function(input, output, session) {
       filter(listings_la, neighborhood %in% input$neighborhood) 
     }
   })
-    
+  
   selected_city_prices <- reactive({
     prices <- 2 * sd(selected_city()$price)
     listings_prices <- selected_city() %>% 
       filter(price <= prices)
     listings_prices
   })
-    
+  
+  selected_neighborhood_avg_ratings <- reactive({
+    req(input$city)
+    req(input$neighborhood)
+    avg_ratings <- selected_neighborhoods() %>% 
+      group_by(neighborhood) %>%
+      summarize(avg_rating = round(mean(review_scores_rating/10, na.rm = TRUE), 2), 
+                avg_cleanliness = round(mean(review_scores_cleanliness, na.rm = TRUE), 2),
+                avg_communication = round(mean(review_scores_communication, na.rm = TRUE), 2)) 
+    avg_ratings
+  })
+  
   # map 
   output$map <- renderPlot ({
     if (input$city == "New York City") {
-    ggplot() +
-      geom_polygon(data = nyc_county, aes(x = long, y = lat, group = group), color = "white", fill = "gray") +
-      geom_point(data = selected_neighborhoods(), aes(x = longitude, y = latitude, alpha = 0.05)) +
-      coord_quickmap(xlim = c(-75, -73), ylim = c(40, 41)) +
-      theme_void() +
-      guides(alpha = FALSE) 
-      
-      
+      ggplot() +
+        geom_polygon(data = nyc_county, aes(x = long, y = lat, group = group), color = "white", fill = "gray") +
+        geom_point(data = selected_neighborhoods(), aes(x = longitude, y = latitude, alpha = 0.05)) +
+        coord_quickmap(xlim = c(-75, -73), ylim = c(40, 41)) +
+        theme_void() +
+        guides(alpha = FALSE) 
       
     } else {
       ggplot() +
@@ -173,64 +185,71 @@ server <- function(input, output, session) {
       theme(legend.title = element_blank())
   })
   
+  # parallel coordinate plot of avg ratings
+  output$avgratings_graph <- renderPlot ({
+    ggparcoord(selected_neighborhood_avg_ratings(), 
+               columns = 2:4, groupColumn = 1, scale = "globalminmax", title = "Average Ratings by Neighborhood")
+  })
+  
+  
   # map 
-  #Other type of map
+  # Other type of map
   # Create our colors with a categorical color function
   bins <- c(0,20,40,60, 80, 100)
-    
-    output$map2 <- renderLeaflet({
-      if (input$city == "New York City") {
-        pal <- colorBin(c("#d7191c", "#fdae61", "#ffffbf", "#a6d96a", "#1a9641"), domain = listings_nyc$review_scores_rating, bins = bins)
-        map2 <- leaflet(listings_nyc) %>%
-          addProviderTiles("CartoDB.Positron", options = providerTileOptions(noWrap = TRUE)) %>%
-          addCircleMarkers(
-            lng = ~longitude,
-            lat = ~latitude,
-            radius=~price,
-            stroke=FALSE,
-            fillColor = ~pal(review_scores_rating),
-            color = "white",
-            fillOpacity=0.5,
-            labelOptions = labelOptions(noHide = FALSE),
-            popup = paste0( '<p><strong>', listings_nyc$name, '</strong> <p/>', 
-                            "<strong> Room Type: </strong>", 
-                            listings_nyc$room_type, '<br/>',
-                            "<strong> Price Per Night </strong>", 
-                            listings_nyc$price)) %>%
-           
+  
+  output$map2 <- renderLeaflet({
+    if (input$city == "New York City") {
+      pal <- colorBin(c("#d7191c", "#fdae61", "#ffffbf", "#a6d96a", "#1a9641"), domain = listings_nyc$review_scores_rating, bins = bins)
+      map2 <- leaflet(listings_nyc) %>%
+        addProviderTiles("CartoDB.Positron", options = providerTileOptions(noWrap = TRUE)) %>%
+        addCircleMarkers(
+          lng = ~longitude,
+          lat = ~latitude,
+          radius=~price,
+          stroke=FALSE,
+          fillColor = ~pal(review_scores_rating),
+          color = "white",
+          fillOpacity=0.5,
+          labelOptions = labelOptions(noHide = FALSE),
+          popup = paste0( '<p><strong>', listings_nyc$name, '</strong> <p/>', 
+                          "<strong> Room Type: </strong>", 
+                          listings_nyc$room_type, '<br/>',
+                          "<strong> Price Per Night </strong>", 
+                          listings_nyc$price)) %>%
+        
         addLegend(
           "bottomright", pal = pal, values = ~review_scores_rating,
           title = "Listings",
           opacity = 0.7,
           labels = labels
         ) 
+      
+    } else {
+      pal <- colorBin(c("#d7191c", "#fdae61", "#ffffbf", "#a6d96a", "#1a9641"), domain = listings_la$review_scores_rating, bins = bins)
+      map2 <- leaflet(listings_la) %>%
+        addProviderTiles("CartoDB.Positron", options = providerTileOptions(noWrap = TRUE)) %>%
+        addCircleMarkers(
+          lng = ~longitude,
+          lat = ~latitude,
+          radius=~price,
+          stroke=FALSE,
+          fillColor = ~pal(review_scores_rating),
+          color = "white",
+          fillOpacity=0.5,
+          popup = paste0( '<p><strong>', listings_la$name, '</strong> <p/>', 
+                          "<strong> Room Type: </strong>", 
+                          listings_la$room_type, '<br/>',
+                          "<strong> Price Per Night </strong>", 
+                          listings_la$price)) %>%
         
-        } else {
-        pal <- colorBin(c("#d7191c", "#fdae61", "#ffffbf", "#a6d96a", "#1a9641"), domain = listings_la$review_scores_rating, bins = bins)
-        map2 <- leaflet(listings_la) %>%
-          addProviderTiles("CartoDB.Positron", options = providerTileOptions(noWrap = TRUE)) %>%
-          addCircleMarkers(
-            lng = ~longitude,
-            lat = ~latitude,
-            radius=~price,
-            stroke=FALSE,
-            fillColor = ~pal(review_scores_rating),
-            color = "white",
-            fillOpacity=0.5,
-            popup = paste0( '<p><strong>', listings_la$name, '</strong> <p/>', 
-                            "<strong> Room Type: </strong>", 
-                            listings_la$room_type, '<br/>',
-                            "<strong> Price Per Night </strong>", 
-                            listings_la$price)) %>%
-          
-          addLegend(
-            "bottomright", pal = pal, values = ~review_scores_rating,
-            title = "Listings",
-            opacity = 0.7,
-            labels = labels
-          ) }
-      })
-    
+        addLegend(
+          "bottomright", pal = pal, values = ~review_scores_rating,
+          title = "Listings",
+          opacity = 0.7,
+          labels = labels
+        ) }
+  })
+  
 }
 
 
