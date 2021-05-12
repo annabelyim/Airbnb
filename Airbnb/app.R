@@ -8,8 +8,6 @@ library(GGally)
 # import data
 listings_la <- read_csv("~/Airbnb/UpdatedLAlistings.csv")
 listings_nyc <- read_csv("~/Airbnb/UpdatedNYClistings.csv") 
-listings_la$price <- as.numeric(gsub("[$,]", "", listings_la$price))
-listings_nyc$price <- as.numeric(gsub("[$,]", "", listings_nyc$price))
 
 # map variables
 counties <- map_data("county")
