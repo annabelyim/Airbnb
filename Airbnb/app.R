@@ -77,7 +77,7 @@ ui <- fluidPage(
     mainPanel(
       withSpinner(plotOutput(outputId = "map")),
       plotOutput(outputId = "avgprice_graph"), 
-      # leafletOutput(("map2"))
+      leafletOutput(("map2"))
     )
   )
 )
