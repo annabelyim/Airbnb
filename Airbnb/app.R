@@ -44,33 +44,29 @@ ui <- fluidPage(
       ),
       
       # sliders
-      uiOutput("slider_price"),
-      uiOutput("slider_reviews"),
+      sliderInput(inputId = "price_range", 
+                  label = "Average Price",
+                  min = 0, max = 500,
+                  value = c(50,150)),
+      sliderInput(inputId = "num_reviews", 
+                  label = "Number of Reviews",
+                  min = 0, max = 200,
+                  value = 10),
+      sliderInput(inputId = "num_guests", 
+                  label = "Number of Guests Allowed",
+                  min = 0, max = 16,
+                  value = 2),
       
       # check boxes
-      checkboxInput(inputId = "entire house",
-                    label = "Entire house",
-                    value = FALSE, 
-                    width = '100%'
-      ),
-      
-      checkboxInput(inputId = "washing machine",
-                    label = "Has a washer & dryer",
-                    value = FALSE, 
-                    width = '100%'
-      ),
-      
-      checkboxInput(inputId = "cooking utilities",
-                    label = "Home cooking utilities",
-                    value = FALSE, 
-                    width = '100%'
-      ),
-      
-      checkboxInput(inputId = "parking",
-                    label = "Free parking",
-                    value = FALSE, 
-                    width = '100%'
+      checkboxGroupInput(inputId = "room_types",
+                         label = "Accomodation Type",
+                         choices = c("Private room", "Shared room", "Hotel room", 
+                                     "Entire home/apt"),
+                         selected = c("Private room", "Shared room", "Hotel room", 
+                                      "Entire home/apt"),
+                         width = '100%'
       )
+      
     ),
     
     
@@ -87,14 +83,20 @@ ui <- fluidPage(
 # Define server 
 server <- function(input, output, session) {
   
-  # city selected
-  selected_city <- reactive({
+  # filters for all attributes selected
+  selected_attributes <- reactive({
     req(input$city)
+    df 
     if (input$city == "New York City") {
-      listings_nyc
+      df <- listings_nyc
     } else {
-      listings_la
+      df <- listings_la
     }
+    df %>% 
+      filter(price <= input$price_range[2] & price >= input$price_range[1],
+             number_of_reviews >= input$num_reviews[1],
+             accommodates >= input$num_guests[1],
+             room_type %in% input$room_types)
   })
   
   # neighborhoods to dynamically changed based on city selected for map 
@@ -114,18 +116,6 @@ server <- function(input, output, session) {
                       choices = selected_city_neighborhoods())
   })
   
-  output$slider_price <- renderUI({
-    sliderInput("avgprice", "Average Price",
-                min = 0, max = 500,
-                value = c(50,150))
-  })
-  
-  output$slider_reviews <- renderUI({
-    sliderInput("reviews", "Number of Reviews",
-                min = 0, max = 200,
-                value = 10)
-  })
-  
   selected_neighborhoods <- reactive({
     req(input$city)
     req(input$neighborhood)
@@ -134,13 +124,6 @@ server <- function(input, output, session) {
     } else {
       filter(listings_la, neighborhood %in% input$neighborhood) 
     }
-  })
-  
-  selected_city_prices <- reactive({
-    prices <- 2 * sd(selected_city()$price)
-    listings_prices <- selected_city() %>% 
-      filter(price <= prices)
-    listings_prices
   })
   
   selected_neighborhood_avg_ratings <- reactive({
@@ -177,7 +160,7 @@ server <- function(input, output, session) {
   
   # histogram of avg price graph 
   output$avgprice_graph <- renderPlot ({
-    ggplot(selected_city_prices(), aes(x = price, fill = room_type)) +
+    ggplot(selected_attributes(), aes(x = price, fill = room_type)) +
       geom_histogram(binwidth = 50) +
       labs(x = "average price", y = "count", title = "Airbnb Average Prices") +
       theme(legend.title = element_blank())
