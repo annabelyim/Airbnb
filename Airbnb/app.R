@@ -29,7 +29,7 @@ ui <- fluidPage(
     sidebarPanel(
       
       # selecting city and neighborhoods 
-      titlePanel("Airbnb Filters"),
+      titlePanel("Data Filters"),
       radioButtons(inputId = "city",
                    label = "Select City",
                    choices = c("Los Angeles", "New York City"),
@@ -48,6 +48,7 @@ ui <- fluidPage(
       uiOutput("slider_reviews"),
       
       # check boxes
+      tags$h1(strong("Amenities"), style = "font-size:14px;"),
       checkboxInput(inputId = "entire house",
                     label = "Entire house",
                     value = FALSE, 
