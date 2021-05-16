@@ -22,14 +22,14 @@ neighborhoods_nyc <- listings_nyc %>% distinct(neighborhood) %>% arrange(neighbo
 ui <- fluidPage(
   
   # Application title
-  titlePanel("Airbnb"),
+  titlePanel("Airbnb Data Dashboard"),
   
   # Filtering Panel 
   sidebarLayout(
     sidebarPanel(
       
       # selecting city and neighborhoods 
-      titlePanel("Airbnb Filters"),
+      titlePanel("Search Filters"),
       radioButtons(inputId = "city",
                    label = "Select City",
                    choices = c("Los Angeles", "New York City"),
@@ -39,7 +39,7 @@ ui <- fluidPage(
       selectInput(inputId = "neighborhood",
                   label = "Select Neighborhood",
                   choices = neighborhoods_la,
-                  selected = "", 
+                  selected = NULL, 
                   multiple = TRUE
       ),
       
@@ -85,12 +85,15 @@ server <- function(input, output, session) {
   # filters for all attributes selected
   selected_attributes <- reactive({
     req(input$city)
-    req(input$neighborhood)
     df 
     if (input$city == "New York City") {
-      df <- filter(listings_nyc, neighborhood %in% input$neighborhood)
+      df <- listings_nyc
     } else {
-      df <- filter(listings_la, neighborhood %in% input$neighborhood)
+      df <- listings_la
+    }
+    if (!is.null(input$neighborhood)) {
+      df <- df %>% 
+        filter(neighborhood %in% input$neighborhood)
     }
     df %>% 
       filter(price <= input$price_range[2] & price >= input$price_range[1],
@@ -147,7 +150,7 @@ server <- function(input, output, session) {
         popup = paste0( '<p><strong>', selected_attributes()$name, '</strong> <p/>',
                         "<strong> Rating: </strong>",
                         selected_attributes()$review_scores_rating, '<br/>',
-                        "<strong> Price Per Night </strong>",
+                        "<strong> Price Per Night: </strong>",
                         selected_attributes()$price))
   })
   # dynamic legends based on selected filters 
@@ -168,7 +171,7 @@ server <- function(input, output, session) {
   output$avgprice_graph <- renderPlot ({
     ggplot(selected_attributes(), aes(x = price, fill = room_type)) +
       geom_histogram(binwidth = 50) +
-      labs(x = "average price", y = "count", title = "Airbnb Average Prices") +
+      labs(x = "average price", y = "count", title = "Average Prices by Accomodation Type") +
       theme(legend.title = element_blank())
   }) # end of histogram 
   
