@@ -96,7 +96,8 @@ server <- function(input, output, session) {
       filter(price <= input$price_range[2] & price >= input$price_range[1],
              number_of_reviews >= input$num_reviews[1],
              accommodates >= input$num_guests[1],
-             room_type %in% input$room_types)
+             room_type %in% input$room_types) %>%
+      mutate(review_scores_rating = review_scores_rating / 10 ) #to be in the same scale as cleanliness/communication ratings 
   })
   
   # neighborhoods to dynamically changed based on city selected for map 
@@ -132,37 +133,34 @@ server <- function(input, output, session) {
   
   # dynamic circle marks based on selected filters
   observe({
-    pal <- colorBin(c("#d7191c", "#fdae61", "#ffffbf", "#a6d96a", "#1a9641"), selected_attributes() %>% select(review_scores_rating), bins = bins)
-    
+    pal2 <- colorFactor("RdYlBu", selected_attributes()$room_type)
     leafletProxy("map2", data = selected_attributes()) %>%
       clearShapes() %>%
       addCircleMarkers(
         lng = ~longitude,
         lat = ~latitude,
         stroke=FALSE,
-        fillColor = ~pal(review_scores_rating),
+        fillColor = ~pal2(room_type),
         color = "white",
         fillOpacity=0.7,
         labelOptions = labelOptions(noHide = FALSE),
         popup = paste0( '<p><strong>', selected_attributes()$name, '</strong> <p/>',
-                        "<strong> Room Type: </strong>",
-                        selected_attributes()$room_type, '<br/>',
+                        "<strong> Rating: </strong>",
+                        selected_attributes()$review_scores_rating, '<br/>',
                         "<strong> Price Per Night </strong>",
                         selected_attributes()$price))
-    
   })
-  
   # dynamic legends based on selected filters 
   observe({
+    pal2 <- colorFactor("RdYlBu", selected_attributes()$room_type)
     leafletProxy("map2", data = selected_attributes()) %>%
       clearShapes() %>%
       addLegend(
-        "bottomright", pal = pal, values = ~review_scores_rating,
+        "bottomleft", pal = pal2, values = ~room_type,
         title = "Listings",
         opacity = 0.7,
         labels = labels
       )
-    
   }) # end of map 
   
 
@@ -180,7 +178,7 @@ server <- function(input, output, session) {
     req(input$neighborhood)
     avg_ratings <- selected_attributes() %>% 
       group_by(neighborhood) %>%
-      summarize(avg_rating = round(mean(review_scores_rating/10, na.rm = TRUE), 2), 
+      summarize(avg_rating = round(mean(review_scores_rating, na.rm = TRUE), 2), 
                 avg_cleanliness = round(mean(review_scores_cleanliness, na.rm = TRUE), 2),
                 avg_communication = round(mean(review_scores_communication, na.rm = TRUE), 2)) 
     avg_ratings
