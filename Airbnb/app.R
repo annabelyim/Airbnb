@@ -71,10 +71,9 @@ ui <- fluidPage(
     
     
     mainPanel(
-      withSpinner(plotOutput(outputId = "map")),
+      withSpinner(leafletOutput(("map2"))),
       plotOutput(outputId = "avgprice_graph"),
       plotOutput(outputId= "avgratings_graph")
-      # leafletOutput(("map2"))
     )
   )
 )
@@ -117,36 +116,65 @@ server <- function(input, output, session) {
                       choices = selected_city_neighborhoods())
   })
   
-  # map 
-  output$map <- renderPlot ({
-    if (input$city == "New York City") {
-      ggplot() +
-        geom_polygon(data = nyc_county, aes(x = long, y = lat, group = group), color = "white", fill = "gray") +
-        geom_point(data = selected_attributes(), aes(x = longitude, y = latitude, alpha = 0.05)) +
-        coord_quickmap(xlim = c(-75, -73), ylim = c(40, 41)) +
-        theme_void() +
-        guides(alpha = FALSE) 
-      
-    } else {
-      ggplot() +
-        geom_polygon(data = ca_county, aes(x = long, y = lat, group = group), color = "white", fill = "gray") +
-        geom_point(data = selected_attributes(), aes(x = longitude, y = latitude, alpha = 0.5)) +
-        coord_quickmap(xlim = c(-119, -117), ylim = c(33, 35)) +
-        theme_void() +
-        guides(alpha = FALSE) 
-    }
+  # map: 
+  bins <- c(0,20,40,60, 80, 100)
+  
+  output$map2 <- renderLeaflet({
+    leaflet(selected_attributes()) %>%
+      addProviderTiles("CartoDB.Positron", options = providerTileOptions(noWrap = TRUE)) 
+  })
+  
+  # dynamic view based on selected filters
+  observe({
+    leafletProxy("map2", data = selected_attributes()) %>%
+      setView(mean(selected_attributes()$longitude),mean(selected_attributes()$latitude), zoom = 10)
+  })
+  
+  # dynamic circle marks based on selected filters
+  observe({
+    pal <- colorBin(c("#d7191c", "#fdae61", "#ffffbf", "#a6d96a", "#1a9641"), selected_attributes() %>% select(review_scores_rating), bins = bins)
+    
+    leafletProxy("map2", data = selected_attributes()) %>%
+      clearShapes() %>%
+      addCircleMarkers(
+        lng = ~longitude,
+        lat = ~latitude,
+        stroke=FALSE,
+        fillColor = ~pal(review_scores_rating),
+        color = "white",
+        fillOpacity=0.7,
+        labelOptions = labelOptions(noHide = FALSE),
+        popup = paste0( '<p><strong>', selected_attributes()$name, '</strong> <p/>',
+                        "<strong> Room Type: </strong>",
+                        selected_attributes()$room_type, '<br/>',
+                        "<strong> Price Per Night </strong>",
+                        selected_attributes()$price))
     
   })
   
-  # histogram of avg price graph 
+  # dynamic legends based on selected filters 
+  observe({
+    leafletProxy("map2", data = selected_attributes()) %>%
+      clearShapes() %>%
+      addLegend(
+        "bottomright", pal = pal, values = ~review_scores_rating,
+        title = "Listings",
+        opacity = 0.7,
+        labels = labels
+      )
+    
+  }) # end of map 
+  
+
+  # histogram of avg price graph:
   output$avgprice_graph <- renderPlot ({
     ggplot(selected_attributes(), aes(x = price, fill = room_type)) +
       geom_histogram(binwidth = 50) +
       labs(x = "average price", y = "count", title = "Airbnb Average Prices") +
       theme(legend.title = element_blank())
-  })
+  }) # end of histogram 
   
-  # avg ratings
+  # avg ratings:
   selected_neighborhood_avg_ratings <- reactive({
     req(input$city)
     req(input$neighborhood)
@@ -156,72 +184,14 @@ server <- function(input, output, session) {
                 avg_cleanliness = round(mean(review_scores_cleanliness, na.rm = TRUE), 2),
                 avg_communication = round(mean(review_scores_communication, na.rm = TRUE), 2)) 
     avg_ratings
-  })
-  
+  }) 
   # parallel coordinate plot of avg ratings
   output$avgratings_graph <- renderPlot ({
     ggparcoord(selected_neighborhood_avg_ratings(), 
                columns = 2:4, groupColumn = 1, scale = "globalminmax", title = "Average Ratings by Neighborhood")
-  })
+  }) # end of avg ratings 
   
-  
-  # map 
-  # Other type of map
-  # Create our colors with a categorical color function
-  bins <- c(0,20,40,60, 80, 100)
-  
-  output$map2 <- renderLeaflet({
-    if (input$city == "New York City") {
-      pal <- colorBin(c("#d7191c", "#fdae61", "#ffffbf", "#a6d96a", "#1a9641"), domain = listings_nyc$review_scores_rating, bins = bins)
-      map2 <- leaflet(listings_nyc) %>%
-        addProviderTiles("CartoDB.Positron", options = providerTileOptions(noWrap = TRUE)) %>%
-        addCircleMarkers(
-          lng = ~longitude,
-          lat = ~latitude,
-          radius=~price,
-          stroke=FALSE,
-          fillColor = ~pal(review_scores_rating),
-          color = "white",
-          fillOpacity=0.5,
-          labelOptions = labelOptions(noHide = FALSE),
-          popup = paste0( '<p><strong>', listings_nyc$name, '</strong> <p/>', 
-                          "<strong> Room Type: </strong>", 
-                          listings_nyc$room_type, '<br/>',
-                          "<strong> Price Per Night </strong>", 
-                          listings_nyc$price)) %>%
-        
-        addLegend(
-          "bottomright", pal = pal, values = ~review_scores_rating,
-          title = "Listings",
-          opacity = 0.7,
-          labels = labels
-        ) 
-      
-    } else {
-      pal <- colorBin(c("#d7191c", "#fdae61", "#ffffbf", "#a6d96a", "#1a9641"), domain = listings_la$review_scores_rating, bins = bins)
-      map2 <- leaflet(listings_la) %>%
-        addProviderTiles("CartoDB.Positron", options = providerTileOptions(noWrap = TRUE)) %>%
-        addCircleMarkers(
-          lng = ~longitude,
-          lat = ~latitude,
-          radius=~price,
-          stroke=FALSE,
-          fillColor = ~pal(review_scores_rating),
-          color = "white",
-          fillOpacity=0.5,
-          popup = paste0( '<p><strong>', listings_la$name, '</strong> <p/>', 
-                          "<strong> Room Type: </strong>", 
-                          listings_la$room_type, '<br/>',
-                          "<strong> Price Per Night </strong>", 
-                          listings_la$price)) %>%
-        
-        addLegend(
-          "bottomright", pal = pal, values = ~review_scores_rating,
-          title = "Listings",
-          opacity = 0.7,
-          labels = labels
-        ) }
-  })
+
   
 }
 
