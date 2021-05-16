@@ -86,11 +86,12 @@ server <- function(input, output, session) {
   # filters for all attributes selected
   selected_attributes <- reactive({
     req(input$city)
+    req(input$neighborhood)
     df 
     if (input$city == "New York City") {
-      df <- listings_nyc
+      df <- filter(listings_nyc, neighborhood %in% input$neighborhood)
     } else {
-      df <- listings_la
+      df <- filter(listings_la, neighborhood %in% input$neighborhood)
     }
     df %>% 
       filter(price <= input$price_range[2] & price >= input$price_range[1],
@@ -116,20 +117,10 @@ server <- function(input, output, session) {
                       choices = selected_city_neighborhoods())
   })
   
-  selected_neighborhoods <- reactive({
-    req(input$city)
-    req(input$neighborhood)
-    if (input$city == "New York City") {
-      filter(listings_nyc, neighborhood %in% input$neighborhood) 
-    } else {
-      filter(listings_la, neighborhood %in% input$neighborhood) 
-    }
-  })
-  
   selected_neighborhood_avg_ratings <- reactive({
     req(input$city)
     req(input$neighborhood)
-    avg_ratings <- selected_neighborhoods() %>% 
+    avg_ratings <- selected_attributes() %>% 
       group_by(neighborhood) %>%
       summarize(avg_rating = round(mean(review_scores_rating/10, na.rm = TRUE), 2), 
                 avg_cleanliness = round(mean(review_scores_cleanliness, na.rm = TRUE), 2),
@@ -142,7 +133,7 @@ server <- function(input, output, session) {
     if (input$city == "New York City") {
       ggplot() +
         geom_polygon(data = nyc_county, aes(x = long, y = lat, group = group), color = "white", fill = "gray") +
-        geom_point(data = selected_neighborhoods(), aes(x = longitude, y = latitude, alpha = 0.05)) +
+        geom_point(data = selected_attributes(), aes(x = longitude, y = latitude, alpha = 0.05)) +
         coord_quickmap(xlim = c(-75, -73), ylim = c(40, 41)) +
         theme_void() +
         guides(alpha = FALSE) 
@@ -150,7 +141,7 @@ server <- function(input, output, session) {
     } else {
       ggplot() +
         geom_polygon(data = ca_county, aes(x = long, y = lat, group = group), color = "white", fill = "gray") +
-        geom_point(data = selected_neighborhoods(), aes(x = longitude, y = latitude, alpha = 0.5)) +
+        geom_point(data = selected_attributes(), aes(x = longitude, y = latitude, alpha = 0.5)) +
         coord_quickmap(xlim = c(-119, -117), ylim = c(33, 35)) +
         theme_void() +
         guides(alpha = FALSE) 
