@@ -117,17 +117,6 @@ server <- function(input, output, session) {
                       choices = selected_city_neighborhoods())
   })
   
-  selected_neighborhood_avg_ratings <- reactive({
-    req(input$city)
-    req(input$neighborhood)
-    avg_ratings <- selected_attributes() %>% 
-      group_by(neighborhood) %>%
-      summarize(avg_rating = round(mean(review_scores_rating/10, na.rm = TRUE), 2), 
-                avg_cleanliness = round(mean(review_scores_cleanliness, na.rm = TRUE), 2),
-                avg_communication = round(mean(review_scores_communication, na.rm = TRUE), 2)) 
-    avg_ratings
-  })
-  
   # map 
   output$map <- renderPlot ({
     if (input$city == "New York City") {
@@ -155,6 +144,18 @@ server <- function(input, output, session) {
       geom_histogram(binwidth = 50) +
       labs(x = "average price", y = "count", title = "Airbnb Average Prices") +
       theme(legend.title = element_blank())
+  })
+  
+  # avg ratings
+  selected_neighborhood_avg_ratings <- reactive({
+    req(input$city)
+    req(input$neighborhood)
+    avg_ratings <- selected_attributes() %>% 
+      group_by(neighborhood) %>%
+      summarize(avg_rating = round(mean(review_scores_rating/10, na.rm = TRUE), 2), 
+                avg_cleanliness = round(mean(review_scores_cleanliness, na.rm = TRUE), 2),
+                avg_communication = round(mean(review_scores_communication, na.rm = TRUE), 2)) 
+    avg_ratings
   })
   
   # parallel coordinate plot of avg ratings
