@@ -5,6 +5,12 @@ library(shinycssloaders)
 library(leaflet)
 library(GGally)
 library(shinydashboard)
+library(tm)
+library(tidytext)
+library(stopwords)
+library(wordcloud)
+library(SnowballC)
+
 
 # import data
 listings_la <- read_csv("~/Airbnb/UpdatedLAlistings.csv")
@@ -88,7 +94,9 @@ ui <- fluidPage(
           plotOutput(outputId = "avgratings_graph"),
           style = "margin: 10px;"
         )
-      )
+      ),
+      br(),
+      plotOutput("wordcloud")
     )
   )
 )
@@ -181,7 +189,7 @@ server <- function(input, output, session) {
       )
   }) # end of map 
   
-
+  
   # histogram of avg price graph:
   output$avgprice_graph <- renderPlot ({
     ggplot(selected_attributes(), aes(x = price, fill = room_type)) +
@@ -207,7 +215,35 @@ server <- function(input, output, session) {
                columns = 2:4, groupColumn = 1, scale = "globalminmax", title = "Average Ratings by Neighborhood")
   }) # end of avg ratings 
   
-
+  # word cloud:
+  selected_amenities <- reactive({
+    req(input$city)
+    
+    split_amenities <- selected_attributes() %>% 
+      unnest_tokens(word, amenities)
+    
+    keywords <- removeWords(split_amenities[[25]], stopwords("en", source="smart")) 
+    keywords <- removeNumbers(keywords)
+    
+    keyword_counts <- read.table(text=keywords, col.names=c('amenities')) %>%
+      filter(!amenities %in% c('.')) %>% #removing period 
+      group_by(amenities) %>%
+      summarise(count = n()) %>%
+      arrange(desc(count)) %>%
+      head(15)
+    keyword_counts
+  })
+  
+  output$wordcloud <- renderPlot({
+    set.seed(1234)
+    wordcloud(words = selected_amenities()$amenities, freq = selected_amenities()$count, scale=c(1.5, 0.5), 
+              max.words=100, random.order=FALSE, rot.per=0.35,
+              colors=brewer.pal(8, "Dark2"))
+    
+  })
+  
+  
+  
   
 }
 
