@@ -84,6 +84,7 @@ ui <- fluidPage(
       ),
       br(),
       wellPanel(
+        h3("Average Prices by Accomodation Type"),
         plotOutput(outputId = "avgprice_graph"),
         style = "margin: 10px;"
       ),
@@ -91,13 +92,15 @@ ui <- fluidPage(
       conditionalPanel(
         condition = "input.neighborhood != ''",
         wellPanel(
+          h3("Average Ratings by Neighborhood"),
           plotOutput(outputId = "avgratings_graph"),
           style = "margin: 10px;"
         )
       ),
       br(),
       wellPanel(
-      plotOutput("wordcloud")
+        h3("Amenities Wordcloud"),
+        plotOutput("wordcloud")
       )
     )
   )
@@ -196,7 +199,7 @@ server <- function(input, output, session) {
   output$avgprice_graph <- renderPlot ({
     ggplot(selected_attributes(), aes(x = price, fill = room_type)) +
       geom_histogram(binwidth = 50) +
-      labs(x = "average price", y = "count", title = "Average Prices by Accomodation Type") +
+      labs(x = "average price", y = "count") +
       theme(legend.title = element_blank())
   }) # end of histogram 
   
@@ -214,7 +217,7 @@ server <- function(input, output, session) {
   # parallel coordinate plot of avg ratings
   output$avgratings_graph <- renderPlot ({
     ggparcoord(selected_neighborhood_avg_ratings(), 
-               columns = 2:4, groupColumn = 1, scale = "globalminmax", title = "Average Ratings by Neighborhood")
+               columns = 2:4, groupColumn = 1, scale = "globalminmax")
   }) # end of avg ratings 
   
   # word cloud:
