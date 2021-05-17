@@ -96,7 +96,9 @@ ui <- fluidPage(
         )
       ),
       br(),
+      wellPanel(
       plotOutput("wordcloud")
+      )
     )
   )
 )
@@ -220,22 +222,22 @@ server <- function(input, output, session) {
     req(input$city)
     
     split_amenities <- selected_attributes() %>% 
-      unnest_tokens(word, amenities)
+      transform(amenities = strsplit(amenities, ",")) %>%
+      unnest(amenities)
     
-    keywords <- removeWords(split_amenities[[25]], stopwords("en", source="smart")) 
+    keywords <- removeWords(split_amenities$amenities, stopwords("en", source="smart")) 
     keywords <- removeNumbers(keywords)
+    keywords <- removePunctuation(keywords)
+    keywords <- gsub( " ", "", keywords) 
     
     keyword_counts <- read.table(text=keywords, col.names=c('amenities')) %>%
-      filter(!amenities %in% c('.')) %>% #removing period 
       group_by(amenities) %>%
       summarise(count = n()) %>%
-      arrange(desc(count)) %>%
-      head(15)
+      arrange(desc(count))
     keyword_counts
   })
   
   output$wordcloud <- renderPlot({
-    set.seed(1234)
     wordcloud(words = selected_amenities()$amenities, freq = selected_amenities()$count, scale=c(1.5, 0.5), 
               max.words=100, random.order=FALSE, rot.per=0.35,
               colors=brewer.pal(8, "Dark2"))
