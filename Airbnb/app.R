@@ -4,6 +4,7 @@ library(maps)
 library(shinycssloaders)
 library(leaflet)
 library(GGally)
+library(shinydashboard)
 
 # import data
 listings_la <- read_csv("~/Airbnb/UpdatedLAlistings.csv")
@@ -71,9 +72,23 @@ ui <- fluidPage(
     
     
     mainPanel(
-      withSpinner(leafletOutput(("map2"))),
-      plotOutput(outputId = "avgprice_graph"),
-      plotOutput(outputId= "avgratings_graph")
+      wellPanel(
+        withSpinner(leafletOutput(("map2"))),
+        style = "margin: 10px;"
+      ),
+      br(),
+      wellPanel(
+        plotOutput(outputId = "avgprice_graph"),
+        style = "margin: 10px;"
+      ),
+      br(),
+      conditionalPanel(
+        condition = "input.neighborhood != ''",
+        wellPanel(
+          plotOutput(outputId = "avgratings_graph"),
+          style = "margin: 10px;"
+        )
+      )
     )
   )
 )
