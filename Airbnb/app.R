@@ -258,7 +258,7 @@ server <- function(input, output, session) {
     
     
     
-       host_stats <- selected_neighborhoods() %>% 
+       host_stats <- selected_attributes() %>% 
        group_by(neighborhood) %>%
        summarize(
       			
