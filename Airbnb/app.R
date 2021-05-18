@@ -103,7 +103,14 @@ ui <- fluidPage(
         plotOutput("wordcloud")
       ),
       br(),
+      wellPanel(
       plotOutput(outputId= "hostStats_graph")
+      ),
+      br(),
+      wellPanel(
+        h3("Host Details and Reviews for the Listing"),
+        plotlyOutput(outputId = "hostgraph")
+      )
     )
   )
 )
@@ -276,6 +283,19 @@ server <- function(input, output, session) {
   output$hostStats_graph <- renderPlot ({
     ggparcoord(selected_neighborhood_host_stats(), 
                columns = 2:4, groupColumn = 1, scale = "globalminmax", title = "Host Stats by Neighborhood")
+  })
+  
+  output$hostgraph <- renderPlotly ({
+    ggplotly(
+      ggplot(data=selected_attributes(), aes(x=host_acceptance_rate, y=number_of_reviews, fill=host_is_superhost, text = paste(
+        "Acceptance Rate: ", host_acceptance_rate,
+        "\nSuperhost: ", host_is_superhost, 
+        "\nVerified Host Identity : ", host_identity_verified, 
+        "\nName of Listing: ", name)
+      ))+
+        geom_point() +
+        labs(x = "Host Acceptance Rate", y = "Number of Reviews", fill = "Superhost") 
+    ) 
   })
   
   
