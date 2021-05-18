@@ -3,7 +3,7 @@
 
 ### Group Members: Annabel Yim, Vibha Gogu, Tina Liu, Elisa Nisly
 
-Acknowledgemet:
+Acknowledgement:
 
 The datasets we are using were sourced from http://insideairbnb.com/about.html.
 
