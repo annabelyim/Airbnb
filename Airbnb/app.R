@@ -9,7 +9,7 @@ library(tm)
 library(tidytext)
 library(stopwords)
 library(wordcloud)
-library(SnowballC)
+library(plotly)
 
 
 # import data
@@ -103,7 +103,7 @@ ui <- fluidPage(
         plotOutput("wordcloud")
       ),
       br(),
-      plotOutput(outputId= "hostStats_graph"),
+      plotOutput(outputId= "hostStats_graph")
     )
   )
 )
