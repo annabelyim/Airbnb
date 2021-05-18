@@ -101,7 +101,9 @@ ui <- fluidPage(
       wellPanel(
         h3("Amenities Wordcloud"),
         plotOutput("wordcloud")
-      )
+      ),
+      br(),
+      plotOutput(outputId= "hostStats_graph"),
     )
   )
 )
@@ -247,7 +249,34 @@ server <- function(input, output, session) {
     
   })
   
+  # % of hosts w/ verified identities, % who are 'superhosts', avg % acceptance of guests
+  selected_neighborhood_host_stats <- reactive({
+	    req(input$city)
+	    req(input$neighborhood)
+	    req(listings_la)
+	    req(listings_nyc)
+    
+    
+    
+       host_stats <- selected_neighborhoods() %>% 
+       group_by(neighborhood) %>%
+       summarize(
+      			
+                percent_hosts_verified = sum(host_identity_verified == "TRUE", na.rm = TRUE) / 
+                					   sum(host_identity_verified != "", na.rm = TRUE),
+                percent_superhost = sum(host_is_superhost == "TRUE", na.rm = TRUE) / 
+                					   sum(host_is_superhost != "", na.rm = TRUE),
+                avg_percent_acceptance = mean(as.numeric(sub("%", "", host_acceptance_rate))/100, na.rm = TRUE)
+                )
+             
+    host_stats
+  })
   
+  # host stats plot
+  output$hostStats_graph <- renderPlot ({
+    ggparcoord(selected_neighborhood_host_stats(), 
+               columns = 2:4, groupColumn = 1, scale = "globalminmax", title = "Host Stats by Neighborhood")
+  })
   
   
 }
