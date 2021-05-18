@@ -72,21 +72,24 @@ ui <- fluidPage(
                          selected = c("Private room", "Shared room", "Hotel room", 
                                       "Entire home/apt"),
                          width = '100%'
-      )
+      ),
+      
+      style = "margin: 10px; padding-top: 1px;"
       
     ),
     
     
     mainPanel(
       wellPanel(
+        h3("Map of Listings"),
         withSpinner(leafletOutput(("map2"))),
-        style = "margin: 10px;"
+        style = "margin: 10px; padding-top: 1px;"
       ),
       br(),
       wellPanel(
         h3("Average Prices by Accomodation Type"),
         plotOutput(outputId = "avgprice_graph"),
-        style = "margin: 10px;"
+        style = "margin: 10px; padding-top: 1px;"
       ),
       br(),
       conditionalPanel(
@@ -94,22 +97,29 @@ ui <- fluidPage(
         wellPanel(
           h3("Average Ratings by Neighborhood"),
           plotOutput(outputId = "avgratings_graph"),
-          style = "margin: 10px;"
+          style = "margin: 10px; padding-top: 1px;"
         )
       ),
       br(),
       wellPanel(
         h3("Amenities Wordcloud"),
-        plotOutput("wordcloud")
+        plotOutput("wordcloud"),
+        style = "margin: 10px; padding-top: 1px;"
       ),
       br(),
-      wellPanel(
-      plotOutput(outputId= "hostStats_graph")
+      conditionalPanel(
+        condition = "input.neighborhood != ''",
+        wellPanel(
+          h3("Average Host Ratings by Neighborhood"),
+          plotOutput(outputId= "hostStats_graph"),
+          style = "margin: 10px; padding-top: 1px;"
+        )
       ),
       br(),
       wellPanel(
         h3("Host Details and Reviews for the Listing"),
-        plotlyOutput(outputId = "hostgraph")
+        plotlyOutput(outputId = "hostgraph"),
+        style = "margin: 10px; padding-top: 1px;"
       )
     )
   )
