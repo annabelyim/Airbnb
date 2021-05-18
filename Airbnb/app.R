@@ -13,8 +13,8 @@ library(plotly)
 
 
 # import data
-listings_la <- read_csv("~/Airbnb/UpdatedLAlistings.csv")
-listings_nyc <- read_csv("~/Airbnb/UpdatedNYClistings.csv") 
+listings_la <- read_csv("Data/UpdatedLAlistings.csv")
+listings_nyc <- read_csv("Data/UpdatedNYClistings.csv") 
 
 # map variables
 counties <- map_data("county")
