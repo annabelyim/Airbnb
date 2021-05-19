@@ -252,7 +252,7 @@ server <- function(input, output, session) {
     
   })
   
-  # host stats plot
+  # host plotly graph
   output$hostgraph <- renderPlotly ({
     ggplotly(
       ggplot(data=selected_attributes(), aes(x=host_acceptance_rate, y=number_of_reviews, fill=host_is_superhost, text = paste(
