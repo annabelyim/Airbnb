@@ -15,6 +15,24 @@ Both files were exported and cleaned, resulting in two csv files that were used 
 
 - UpdatedNYClistings.csv
 
+Dependencies:
+
+```{r}
+# packages that need to be installed before running:
+install.packages("shiny")
+install.packages("tidyverse")
+install.packages("maps")
+install.packages("shinycssloaders")
+install.packages("leaflet")
+install.packages("GGally")
+install.packages("shinydashboard")
+install.packages("tm")
+install.packages("tidytext")
+install.packages("stopwords")
+install.packages("wordcloud")
+install.packages("plotly")
+```
+
 
 
 
