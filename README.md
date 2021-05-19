@@ -3,6 +3,8 @@
 
 ### Group Members: Annabel Yim, Vibha Gogu, Tina Liu, Elisa Nisly
 
+### Link to Shiny App: https://tnmnxl.shinyapps.io/Airbnb/
+
 Acknowledgemet:
 
 The datasets we are using were sourced from http://insideairbnb.com/about.html.
